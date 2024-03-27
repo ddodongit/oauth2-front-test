@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { getCookie } from "./cookies";
+import { getCookie, setCookie } from "./cookies";
 import { useNavigate } from "react-router";
 
 const Home = () => {
   const navigate = useNavigate();
-  // const params = useParams();
 
   const [user, setUser] = useState();
   const [token, setToken] = useState({
@@ -13,49 +12,62 @@ const Home = () => {
     refreshToken: "",
   });
 
-  const refresh = async () => {
-    console.log("refresh");
+  async function fetchUserProfile() {
+    return axios.get("http://localhost:8080/api/user/profile", {
+      headers: {
+        Authorization: `Bearer ${getCookie("access_token")}`,
+      },
+    });
+  }
+
+  async function reissueToken() {
+    return axios.get("http://localhost:8080/api/user/token/refresh", {
+      headers: {
+        Authorization: `Bearer ${getCookie("refresh_token")}`,
+      },
+    });
+  }
+
+  const getUserProfile = async () => {
+    console.log("get profile");
+
     try {
-      const data = await axios
-        .get("http://localhost:8080/api/user/token/refresh", {
-          headers: {
-            Authorization: `Bearer ${getCookie("refresh_token")}`,
-          },
-        })
-        .then((response) => response);
-
-      // 응답 성공, data 처리
-      console.log(data);
-      // window.location.reload();
-      return data;
+      const userInfoResponse = await fetchUserProfile();
+      setUser(userInfoResponse.data);
+      setToken({
+        accessToken: getCookie("access_token"),
+        refreshToken: getCookie("refresh_token"),
+      });
     } catch (error) {
-      // 401 응답을 받은 경우
       if (error.response && error.response.status === 401) {
+        // access token 만료
         console.log(error.response);
-
-        // window.location.href = "/logout";
+        try {
+          const refreshTokenResponse = await reissueToken();
+          if (refreshTokenResponse.status === 200) {
+            // 새로운 accessToken으로 프로필 정보 재요청
+            // http이면 cookie 못 받아옴
+            const userInfoResponse = await fetchUserProfile(getCookie("access_token"));
+            setUser(userInfoResponse.data);
+            setToken({
+              accessToken: getCookie("access_token"),
+              refreshToken: getCookie("refresh_token"),
+            });
+          }
+        } catch (refreshError) {
+          console.log("refersh error");
+          // else {
+          // refresh token도 만료 또는 유효하지 않음
+          throw new Error("Refresh Token expired");
+          // }
+          // window.location.href = "/login";
+        }
       } else {
         // 다른 종류의 오류 처리
         console.error("요청 실패:", error);
         throw error;
       }
     }
-  };
-
-  const getUserProfile = async () => {
-    console.log("get profile");
-    const data = await axios
-      .get("http://localhost:8080/api/user/profile", {
-        headers: {
-          Authorization: `Bearer ${getCookie("access_token")}`,
-        },
-      })
-      .then((response) => response.data);
-    setUser(data);
-    setToken({
-      accessToken: getCookie("access_token"),
-      refreshToken: getCookie("refresh_token"),
-    });
   };
 
   const logout = async () => {
@@ -68,6 +80,11 @@ const Home = () => {
       })
       .then((response) => response);
     console.log(data);
+    setToken({
+      accessToken: "",
+      refreshToken: "",
+    });
+    setUser(null);
   };
 
   useEffect(() => {
@@ -117,9 +134,6 @@ const Home = () => {
               Refresh Token
               <span className="mx-2 badge text-bg-secondary">{token.refreshToken.slice(-50)}</span>
             </div>
-            <button type="button" className="btn btn-danger btn-sm" onClick={refresh}>
-              refresh
-            </button>
           </>
         ) : (
           <div />
