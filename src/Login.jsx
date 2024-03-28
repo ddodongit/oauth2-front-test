@@ -29,7 +29,9 @@ const Login = (props) => {
           className={"inputButton"}
           id="naver"
           type="button"
-          onClick={() => navigate("/naver")}
+          onClick={() =>
+            (window.location.href = `${host_server_base_url}/api/oauth2/authorization/naver?redirect_uri=/&mode=login`)
+          }
           value={"Naver Log in"}
         />
         <input
