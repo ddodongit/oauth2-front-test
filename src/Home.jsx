@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { getCookie, setCookie } from "./cookies";
+import { getCookie } from "./cookies";
 import { useNavigate } from "react-router";
 
 const Home = () => {
@@ -73,11 +73,15 @@ const Home = () => {
   const logout = async () => {
     console.log("logout");
     const data = await axios
-      .get("http://localhost:8080/api/logout", {
-        headers: {
-          Authorization: `Bearer ${getCookie("access_token")}`,
-        },
-      })
+      .post(
+        "http://localhost:8080/api/logout",
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${getCookie("access_token")}`,
+          },
+        }
+      )
       .then((response) => response);
     console.log(data);
     setToken({
