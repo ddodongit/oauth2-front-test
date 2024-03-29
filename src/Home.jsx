@@ -21,11 +21,15 @@ const Home = () => {
   }
 
   async function reissueToken() {
-    return axios.get("http://localhost:8080/api/user/token/refresh", {
-      headers: {
-        Authorization: `Bearer ${getCookie("refresh_token")}`,
-      },
-    });
+    return axios.post(
+      "http://localhost:8080/api/user/token/refresh",
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${getCookie("refresh_token")}`,
+        },
+      }
+    );
   }
 
   const getUserProfile = async () => {
@@ -65,7 +69,7 @@ const Home = () => {
       } else {
         // 다른 종류의 오류 처리
         console.error("요청 실패:", error);
-        throw error;
+        // throw error;
       }
     }
   };

@@ -1,11 +1,8 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const host_server_base_url = "http://localhost:8080";
 
 const Login = (props) => {
-  const [email, setEmail] = useState("");
-
   const navigate = useNavigate();
 
   return (
